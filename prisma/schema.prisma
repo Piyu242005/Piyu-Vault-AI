@@ -4,19 +4,28 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  clerkId       String    @unique
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  id          String   @id @default(cuid())
+  clerkId     String   @unique
+  email       String   @unique
+  firstName   String?
+  lastName    String?
+  imageUrl    String?
+  role        Role     @default(MEMBER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   sessions      Session[]
-  securityLogs  SecurityLog[]
+  securityEvents SecurityEvent[]
+  activityLogs   ActivityLog[]
   notes         Note[]
   documents     Document[]
   chats         Chat[]
@@ -33,16 +42,24 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model SecurityLog {
-  id           String   @id @default(cuid())
-  userId       String
-  event        String
-  ipAddress    String?
-  device       String?
-  location     String?
-  createdAt    DateTime @default(now())
+model SecurityEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  eventType   String
+  ipAddress   String?
+  device      String?
+  createdAt   DateTime @default(now())
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Note {
@@ -58,15 +75,15 @@ model Note {
 }
 
 model Document {
-  id           String   @id @default(cuid())
-  userId       String
-  title        String
-  fileUrl      String
-  fileType     String
-  sizeBytes    Int
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  fileType    String
+  size        Int
+  storagePath String
+  createdAt   DateTime @default(now())
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Chat {
