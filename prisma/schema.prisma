@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  clerkId       String    @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  sessions      Session[]
+  securityLogs  SecurityLog[]
+  notes         Note[]
+  documents     Document[]
+  chats         Chat[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  device       String?
+  ipAddress    String?
+  lastActive   DateTime @default(now())
+  isRevoked    Boolean  @default(false)
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SecurityLog {
+  id           String   @id @default(cuid())
+  userId       String
+  event        String
+  ipAddress    String?
+  device       String?
+  location     String?
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Note {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  content      String   @db.Text
+  tags         String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  fileUrl      String
+  fileType     String
+  sizeBytes    Int
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Chat {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String?
+  messages     Json     // Store chat history as JSON for MVP
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
