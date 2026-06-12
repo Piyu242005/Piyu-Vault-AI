@@ -29,6 +29,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "nanoid": "^3.3.12",
+    "postcss": "^8.5.15",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "typescript": "^5"
