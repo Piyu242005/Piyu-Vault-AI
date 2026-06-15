@@ -1,36 +1,38 @@
 import os
 from langchain_openai import ChatOpenAI
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from app.services.qdrant_service import get_vector_store
 from app.schemas.ai import ChatResponse, SearchResult
 
 class RAGService:
-    def __init__(self):
-        self.vector_store = get_vector_store()
-        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 4})
-        
+    def _get_llm(self):
         # OpenAI LLM for generating answers
         # Ensure OPENAI_API_KEY is set in environment
-        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        # Return a mock or lazy init if key not set (for docs generation)
+        api_key = os.getenv("OPENAI_API_KEY", "dummy_key")
+        return ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=api_key)
+
+    def _get_retrieval_chain(self):
+        store = get_vector_store()
+        retriever = store.as_retriever(search_kwargs={"k": 4})
+        llm = self._get_llm()
         
-        self.prompt = ChatPromptTemplate.from_messages([
+        prompt = ChatPromptTemplate.from_messages([
             ("system", "You are a helpful assistant for Piyu Vault AI. Use the following context to answer the user's question.\n\nContext:\n{context}"),
             ("user", "{input}")
         ])
         
-        self.document_chain = create_stuff_documents_chain(self.llm, self.prompt)
-        self.retrieval_chain = create_retrieval_chain(self.retriever, self.document_chain)
+        document_chain = create_stuff_documents_chain(llm, prompt)
+        return create_retrieval_chain(retriever, document_chain)
 
     def search(self, query: str, limit: int = 5) -> list[SearchResult]:
         """
         Performs a semantic search returning the raw chunks.
         """
-        docs = self.vector_store.similarity_search(query, k=limit)
-        # Note: Langchain Qdrant similarity_search doesn't natively return scores in the base method
-        # To get scores, use similarity_search_with_score
-        docs_with_scores = self.vector_store.similarity_search_with_score(query, k=limit)
+        store = get_vector_store()
+        docs_with_scores = store.similarity_search_with_score(query, k=limit)
         
         results = []
         for doc, score in docs_with_scores:
@@ -45,7 +47,8 @@ class RAGService:
         """
         Performs the RAG flow: retrieve relevant chunks, and pass them to the LLM to generate an answer.
         """
-        response = self.retrieval_chain.invoke({"input": question})
+        chain = self._get_retrieval_chain()
+        response = chain.invoke({"input": question})
         
         sources = [
             SearchResult(

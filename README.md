@@ -1,26 +1,95 @@
-# Piyu Vault AI - Setup Progress
+# Piyu Vault AI
 
-We have successfully scaffolded the foundational architecture for the **Piyu Vault AI** platform according to the MVP 1 roadmap.
+An enterprise-grade, AI-powered personal knowledge intelligence platform.
 
-## Accomplishments
+Piyu Vault AI is a full-stack application leveraging a hybrid architecture with Next.js for a premium frontend experience and FastAPI for a robust backend data layer, including advanced Retrieval-Augmented Generation (RAG) capabilities.
 
-1. **Next.js 15 Setup**: Initialized the project at the root directory with the App Router, Tailwind CSS, and TypeScript.
-2. **Directory Architecture**: Scaffolded the complex directory structure required for the AI components (`src/features/ai`, `src/actions`, `src/app/(auth)`, etc.).
-3. **Database Schema**: Created the `prisma/schema.prisma` file containing the initial core models (`User`, `Session`, `SecurityLog`, `Note`, `Document`, `Chat`).
-4. **Authentication Pages**: Developed the `/sign-in` and `/sign-up` UI layouts utilizing the custom "Deploy Piyu" premium aesthetic.
-5. **Dashboard & Security Center**: Built out the initial placeholder UI for the core Dashboard, Settings, and Security Center.
-6. **Middleware Setup**: Added `src/middleware.ts` to ensure all core pages are protected routes via Clerk.
+## Architecture
 
-## Pending Actions (Action Required)
+*   **Frontend**: Next.js 15 (App Router), React, Tailwind CSS
+*   **Authentication**: Clerk
+*   **Database**: PostgreSQL (Neon)
+*   **Database Management**: Prisma (Frontend/Source of Truth), SQLAlchemy (Backend)
+*   **Backend API**: FastAPI (Python)
+*   **Vector Database**: Qdrant
+*   **AI Engine**: LangChain, SentenceTransformers (`all-MiniLM-L6-v2`), OpenAI (`gpt-4o-mini`)
 
-During the package installation phase, Windows prevented some dependencies from being installed due to a file locking issue (this commonly happens if VS Code or a local development server is open in the folder while `npm install` is running).
+## Features
 
-> [!IMPORTANT]  
-> Please run the following command in your terminal manually to finish installing the dependencies. Make sure you don't have the Next.js dev server running while you do this.
-> ```bash
-> npm install framer-motion lucide-react @clerk/nextjs @prisma/client
-> npm install -D prisma
-> npx shadcn@latest init -d
-> ```
+*   **Premium Aesthetic**: A curated "Deploy Piyu" premium glassmorphism and modern UI aesthetic.
+*   **Secure Authentication**: Fully protected routing and authentication flows via Clerk.
+*   **Data Synchronisation**: Prisma as the single source of truth for the database schema, with SQLAlchemy mapping models for the FastAPI backend.
+*   **Semantic Search & RAG**: Local text embedding via `sentence-transformers` coupled with Qdrant for lightning-fast semantic search. LangChain and OpenAI generate contextual answers via Retrieval-Augmented Generation (RAG).
+*   **RESTful Core**: Fully documented (Swagger UI) CRUD endpoints for Notes, Documents, and Activity Logs.
 
-Once the dependencies are installed successfully, let me know, and we can proceed to configuring the Clerk and Prisma environment variables!
+## Setup Instructions
+
+### 1. Environment Variables
+
+Create a `.env` file in the root directory (based on `.env.example`):
+
+```env
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_pub_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+
+# Database
+DATABASE_URL=your_postgresql_url
+
+# AI & Vector DB
+OPENAI_API_KEY=your_openai_key
+QDRANT_URL=http://localhost:6333
+EMBEDDING_MODEL=all-MiniLM-L6-v2
+COLLECTION_NAME=piyu_vault
+```
+
+Copy the same `.env` file into the `backend/` directory for the FastAPI app.
+
+### 2. Frontend Setup
+
+Install dependencies and generate the Prisma client:
+
+```bash
+pnpm install
+npx prisma generate
+npx prisma db push
+```
+
+Run the Next.js development server:
+
+```bash
+pnpm run dev
+```
+
+### 3. Backend Setup
+
+Start your Qdrant container (if using Docker):
+
+```bash
+docker-compose up -d
+```
+
+Navigate to the `backend/` directory, create a virtual environment, and install the dependencies:
+
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Run the FastAPI development server:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+You can view the interactive API documentation at `http://localhost:8000/docs`.
+
+## Roadmap
+
+*   **Version 0.1**: Initial Next.js Scaffold & UI ✅
+*   **Version 0.2**: Clerk Auth & PostgreSQL Setup ✅
+*   **Version 0.3**: FastAPI CRUD Endpoints & Pydantic Schemas ✅
+*   **Version 0.4**: Qdrant Vector Search & AI RAG Integration ✅
+*   **Version 0.5**: Frontend & Backend Integration (Coming Soon)

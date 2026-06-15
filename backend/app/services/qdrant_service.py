@@ -1,7 +1,7 @@
 import os
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams
-from langchain_community.vectorstores import Qdrant
+from langchain_qdrant import QdrantVectorStore
 from app.services.embedding_service import get_embedding_model
 
 def get_qdrant_client() -> QdrantClient:
@@ -26,7 +26,7 @@ def initialize_qdrant_collection():
         )
         print(f"Created Qdrant collection: {collection_name}")
 
-def get_vector_store() -> Qdrant:
+def get_vector_store() -> QdrantVectorStore:
     """
     Returns the LangChain Qdrant vector store interface.
     """
@@ -34,8 +34,8 @@ def get_vector_store() -> Qdrant:
     collection_name = os.getenv("COLLECTION_NAME", "piyu_vault")
     embeddings = get_embedding_model()
     
-    return Qdrant(
+    return QdrantVectorStore(
         client=client,
         collection_name=collection_name,
-        embeddings=embeddings
+        embedding=embeddings
     )
