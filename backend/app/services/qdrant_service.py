@@ -18,13 +18,16 @@ def initialize_qdrant_collection():
     client = get_qdrant_client()
     collection_name = os.getenv("COLLECTION_NAME", "piyu_vault")
     
-    # Check if collection exists
-    if not client.collection_exists(collection_name):
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(size=384, distance=Distance.COSINE), # 384 is size of all-MiniLM-L6-v2
-        )
-        print(f"Created Qdrant collection: {collection_name}")
+    try:
+        # Check if collection exists
+        if not client.collection_exists(collection_name):
+            client.create_collection(
+                collection_name=collection_name,
+                vectors_config=VectorParams(size=384, distance=Distance.COSINE), # 384 is size of all-MiniLM-L6-v2
+            )
+            print(f"Created Qdrant collection: {collection_name}")
+    except Exception as e:
+        print(f"Warning: Could not connect to Qdrant on startup. {e}")
 
 def get_vector_store() -> QdrantVectorStore:
     """
