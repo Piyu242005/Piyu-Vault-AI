@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Piyu Vault AI | Personal Knowledge Intelligence Platform",
-  description: "An AI-Powered Personal Knowledge Intelligence Platform combining Secure Cloud Storage, RAG, Semantic Search, NLP, Machine Learning, and Data Analytics.",
+  title: "Piyu Vault AI",
+  description: "Private Knowledge. Secure Intelligence.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full flex flex-col bg-[#050505] text-[#F5F5F5]">
+      <body className="min-h-full flex flex-col bg-vault-bg text-vault-text">
         <ClerkProvider>
           {children}
         </ClerkProvider>
