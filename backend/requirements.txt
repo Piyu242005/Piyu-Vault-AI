@@ -7,3 +7,9 @@ sqlalchemy
 asyncpg
 alembic
 greenlet
+qdrant-client
+langchain
+langchain-community
+langchain-openai
+sentence-transformers
+openai

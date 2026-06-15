@@ -1,0 +1,46 @@
+from fastapi import APIRouter, HTTPException, status
+from typing import List
+from app.schemas.ai import SearchQuery, EmbedRequest, SearchResult, ChatRequest, ChatResponse
+from app.services.ingestion_service import ingestion_service
+from app.services.rag_service import rag_service
+from app.services.qdrant_service import initialize_qdrant_collection
+
+router = APIRouter(prefix="/ai", tags=["AI & RAG"])
+
+@router.on_event("startup")
+async def startup_event():
+    """Ensure the Qdrant collection is created on startup."""
+    initialize_qdrant_collection()
+
+@router.post("/embed", status_code=status.HTTP_201_CREATED)
+async def embed_text(request: EmbedRequest):
+    """
+    Ingest text: chunk it, generate embeddings, and store in Qdrant.
+    """
+    try:
+        doc_ids = ingestion_service.ingest_text(request.text, request.metadata)
+        return {"message": "Text successfully embedded and stored.", "document_ids": doc_ids}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to embed text: {str(e)}")
+
+@router.post("/search", response_model=List[SearchResult])
+async def search_vectors(request: SearchQuery):
+    """
+    Perform a semantic search against the vector database.
+    """
+    try:
+        results = rag_service.search(request.query, request.limit)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+@router.post("/chat", response_model=ChatResponse)
+async def chat_rag(request: ChatRequest):
+    """
+    RAG endpoint: searches for context and uses the LLM to generate an answer.
+    """
+    try:
+        response = rag_service.chat(request.question)
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat generation failed: {str(e)}")
