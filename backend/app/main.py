@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import api_router
+
 app = FastAPI(title="Piyu Vault AI API")
 
 # Enable CORS for Next.js Frontend
@@ -16,9 +18,4 @@ app.add_middleware(
 def health():
     return {"status": "ok"}
 
-@app.get("/api/user")
-def user():
-    return {
-        "name": "Piyush",
-        "role": "OWNER"
-    }
+app.include_router(api_router, prefix="/api")
