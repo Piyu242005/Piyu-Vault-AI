@@ -3,6 +3,7 @@ uvicorn
 pydantic
 pydantic-settings
 python-dotenv
+python-multipart
 sqlalchemy
 asyncpg
 alembic
@@ -11,5 +12,9 @@ qdrant-client
 langchain
 langchain-community
 langchain-openai
+langchain-text-splitters
+langchain-qdrant
 sentence-transformers
 openai
+pytest
+pytest-asyncio
