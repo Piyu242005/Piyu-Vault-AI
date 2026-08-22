@@ -16,5 +16,6 @@ langchain-text-splitters
 langchain-qdrant
 sentence-transformers
 openai
+supabase
 pytest
 pytest-asyncio
