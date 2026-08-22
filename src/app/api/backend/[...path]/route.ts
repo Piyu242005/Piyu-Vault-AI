@@ -1,11 +1,15 @@
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 async function proxy(request: Request, context: { params: Promise<{ path: string[] }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
+  }
 
   const { path } = await context.params;
   const url = new URL(request.url);
@@ -13,7 +17,7 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
   target.search = url.search;
 
   const headers = new Headers(request.headers);
-  headers.set("x-clerk-user-id", userId);
+  headers.set("authorization", `Bearer ${session.access_token}`);
   headers.delete("host");
 
   const response = await fetch(target, {
