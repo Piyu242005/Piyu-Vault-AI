@@ -28,8 +28,7 @@ export default function AIPage() {
     finally { setLoading(false); }
   }
 
-  async function search(event: FormEvent) {
-    event.preventDefault();
+  async function semanticSearch() {
     if (!question.trim()) return;
     setSearching(true); setError("");
     try {
@@ -46,7 +45,7 @@ export default function AIPage() {
         <div className="mb-6 flex items-center gap-3"><div className="rounded-xl bg-vault-primary/10 p-3 text-vault-primary"><Bot /></div><div><h1 className="text-2xl font-bold text-white">Vault Intelligence</h1><p className="text-sm text-vault-muted">Ask questions against your indexed knowledge.</p></div></div>
         <form onSubmit={ask} className="space-y-3">
           <textarea value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask your vault anything…" className="min-h-32 w-full rounded-2xl border border-vault-border bg-vault-bg p-4 text-white outline-none focus:border-vault-primary" />
-          <div className="flex flex-wrap gap-3"><button disabled={loading} className="flex items-center gap-2 rounded-xl bg-vault-primary px-5 py-3 font-semibold text-white disabled:opacity-50"><Sparkles size={18} />{loading ? "Thinking…" : "Ask AI"}</button><button type="button" onClick={(e) => void search(e as unknown as FormEvent)} disabled={searching} className="flex items-center gap-2 rounded-xl border border-vault-border px-5 py-3 font-semibold text-white disabled:opacity-50"><Search size={18} />{searching ? "Searching…" : "Semantic Search"}</button></div>
+          <div className="flex flex-wrap gap-3"><button disabled={loading} className="flex items-center gap-2 rounded-xl bg-vault-primary px-5 py-3 font-semibold text-white disabled:opacity-50"><Sparkles size={18} />{loading ? "Thinking…" : "Ask AI"}</button><button type="button" onClick={() => void semanticSearch()} disabled={searching} className="flex items-center gap-2 rounded-xl border border-vault-border px-5 py-3 font-semibold text-white disabled:opacity-50"><Search size={18} />{searching ? "Searching…" : "Semantic Search"}</button></div>
         </form>
         {error && <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div>}
       </section>
