@@ -8,22 +8,21 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
   if (!userId) return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
 
   const { path } = await context.params;
-  const target = `${BACKEND_URL.replace(/\/$/, "")}/api/${path.join("/")}`;
   const url = new URL(request.url);
-  if (url.search) target.concat(url.search);
+  const target = new URL(`${BACKEND_URL.replace(/\/$/, "")}/api/${path.join("/")}`);
+  target.search = url.search;
 
   const headers = new Headers(request.headers);
   headers.set("x-clerk-user-id", userId);
   headers.delete("host");
 
-  const init: RequestInit = {
+  const response = await fetch(target, {
     method: request.method,
     headers,
     redirect: "manual",
     body: ["GET", "HEAD"].includes(request.method) ? undefined : await request.arrayBuffer(),
-  };
+  });
 
-  const response = await fetch(target, init);
   const responseHeaders = new Headers(response.headers);
   responseHeaders.delete("content-encoding");
   responseHeaders.delete("content-length");
