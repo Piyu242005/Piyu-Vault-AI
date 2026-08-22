@@ -11,12 +11,12 @@ class Role(enum.Enum):
 class User(BaseModel):
     __tablename__ = "users"
 
-    clerk_id = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
+    auth_id = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
-    role = Column(Enum(Role), default=Role.MEMBER)
+    role = Column(Enum(Role), default=Role.MEMBER, nullable=False)
 
     notes = relationship("Note", back_populates="user", cascade="all, delete-orphan")
     documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
