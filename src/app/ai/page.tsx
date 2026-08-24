@@ -6,53 +6,11 @@ import { Bot, Search, Sparkles } from "lucide-react";
 type SearchResult = { content: string; score: number; metadata: Record<string, unknown> };
 type ChatResponse = { answer: string; sources: SearchResult[] };
 
+const examples = ["Summarize my machine learning notes", "What have I uploaded about Python?", "Find my latest project ideas"];
+
 export default function AIPage() {
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [sources, setSources] = useState<SearchResult[]>([]);
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState("");
-
-  async function ask(event: FormEvent) {
-    event.preventDefault();
-    if (!question.trim()) return;
-    setLoading(true); setError(""); setAnswer(""); setSources([]);
-    try {
-      const res = await fetch("/api/backend/ai/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: question.trim() }) });
-      if (!res.ok) throw new Error((await res.json()).detail || "AI request failed");
-      const data: ChatResponse = await res.json();
-      setAnswer(data.answer); setSources(data.sources || []);
-    } catch (err) { setError(err instanceof Error ? err.message : "AI request failed"); }
-    finally { setLoading(false); }
-  }
-
-  async function semanticSearch() {
-    if (!question.trim()) return;
-    setSearching(true); setError("");
-    try {
-      const res = await fetch("/api/backend/ai/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: question.trim(), limit: 8 }) });
-      if (!res.ok) throw new Error((await res.json()).detail || "Search failed");
-      setSearchResults(await res.json());
-    } catch (err) { setError(err instanceof Error ? err.message : "Search failed"); }
-    finally { setSearching(false); }
-  }
-
-  return (
-    <main className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <section className="rounded-3xl border border-vault-border bg-vault-card p-6 lg:p-8">
-        <div className="mb-6 flex items-center gap-3"><div className="rounded-xl bg-vault-primary/10 p-3 text-vault-primary"><Bot /></div><div><h1 className="text-2xl font-bold text-white">Vault Intelligence</h1><p className="text-sm text-vault-muted">Ask questions against your indexed knowledge.</p></div></div>
-        <form onSubmit={ask} className="space-y-3">
-          <textarea value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask your vault anything…" className="min-h-32 w-full rounded-2xl border border-vault-border bg-vault-bg p-4 text-white outline-none focus:border-vault-primary" />
-          <div className="flex flex-wrap gap-3"><button disabled={loading} className="flex items-center gap-2 rounded-xl bg-vault-primary px-5 py-3 font-semibold text-white disabled:opacity-50"><Sparkles size={18} />{loading ? "Thinking…" : "Ask AI"}</button><button type="button" onClick={() => void semanticSearch()} disabled={searching} className="flex items-center gap-2 rounded-xl border border-vault-border px-5 py-3 font-semibold text-white disabled:opacity-50"><Search size={18} />{searching ? "Searching…" : "Semantic Search"}</button></div>
-        </form>
-        {error && <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div>}
-      </section>
-
-      {answer && <section className="rounded-3xl border border-vault-border bg-vault-card p-6"><h2 className="mb-3 font-semibold text-white">Answer</h2><p className="whitespace-pre-wrap leading-7 text-zinc-200">{answer}</p>{sources.length > 0 && <div className="mt-6 space-y-2"><h3 className="text-sm font-semibold text-vault-muted">Sources</h3>{sources.map((source, index) => <div key={index} className="rounded-xl border border-vault-border/60 bg-vault-bg/50 p-3 text-sm text-zinc-300"><span className="mr-2 text-vault-primary">{source.score.toFixed(2)}</span>{source.content}</div>)}</div>}</section>}
-
-      {searchResults.length > 0 && <section className="rounded-3xl border border-vault-border bg-vault-card p-6"><h2 className="mb-4 font-semibold text-white">Semantic Results</h2><div className="space-y-3">{searchResults.map((result, index) => <article key={index} className="rounded-2xl border border-vault-border/60 p-4"><div className="mb-2 text-xs text-vault-primary">Relevance {result.score.toFixed(3)}</div><p className="text-sm leading-6 text-zinc-300">{result.content}</p></article>)}</div></section>}
-    </main>
-  );
+  const [question, setQuestion] = useState(""); const [answer, setAnswer] = useState(""); const [sources, setSources] = useState<SearchResult[]>([]); const [searchResults, setSearchResults] = useState<SearchResult[]>([]); const [loading, setLoading] = useState(false); const [searching, setSearching] = useState(false); const [error, setError] = useState("");
+  async function ask(event: FormEvent) { event.preventDefault(); if (!question.trim()) return; setLoading(true); setError(""); setAnswer(""); setSources([]); try { const res = await fetch("/api/backend/ai/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: question.trim() }) }); const body = await res.json().catch(() => ({})); if (!res.ok) throw new Error(body.detail || "AI request failed"); const data: ChatResponse = body; setAnswer(data.answer); setSources(data.sources || []); } catch (err) { setError(err instanceof Error ? err.message : "AI request failed"); } finally { setLoading(false); } }
+  async function semanticSearch() { if (!question.trim()) return; setSearching(true); setError(""); try { const res = await fetch("/api/backend/ai/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: question.trim(), limit: 8 }) }); const body = await res.json().catch(() => ({})); if (!res.ok) throw new Error(body.detail || "Search failed"); setSearchResults(body); } catch (err) { setError(err instanceof Error ? err.message : "Search failed"); } finally { setSearching(false); } }
+  return <main className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6"><section className="relative overflow-hidden rounded-3xl border border-vault-border bg-vault-card p-6 lg:p-10"><div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-vault-primary/15 blur-3xl"/><div className="relative"><div className="mb-7 flex items-center gap-4"><div className="rounded-2xl bg-vault-primary/10 p-3 text-vault-primary"><Bot size={26}/></div><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-vault-primary">Vault Intelligence</p><h1 className="mt-1 text-3xl font-bold text-white">Ask your knowledge</h1><p className="mt-1 text-sm text-vault-muted">Private RAG search across your indexed vault.</p></div></div><form onSubmit={ask} className="space-y-3"><textarea value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask anything about your private knowledge…" className="min-h-36 w-full rounded-2xl border border-vault-border bg-vault-bg p-4 leading-7 text-white outline-none placeholder:text-vault-muted focus:border-vault-primary"/>{!question && <div className="flex flex-wrap gap-2">{examples.map((example) => <button type="button" key={example} onClick={() => setQuestion(example)} className="rounded-full border border-vault-border bg-vault-bg/70 px-3 py-1.5 text-xs text-vault-muted hover:border-vault-primary/40 hover:text-white">{example}</button>)}</div>}<div className="flex flex-wrap gap-3"><button disabled={loading || !question.trim()} className="flex items-center gap-2 rounded-xl bg-vault-primary px-5 py-3 font-semibold text-white shadow-lg shadow-vault-primary/20 disabled:cursor-not-allowed disabled:opacity-50"><Sparkles size={18}/>{loading ? "Thinking…" : "Ask AI"}</button><button type="button" onClick={() => void semanticSearch()} disabled={searching || !question.trim()} className="flex items-center gap-2 rounded-xl border border-vault-border px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"><Search size={18}/>{searching ? "Searching…" : "Semantic search"}</button></div></form>{error && <div role="alert" className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div>}</div></section>{loading && <section className="rounded-3xl border border-vault-border bg-vault-card p-6"><div className="mb-4 h-4 w-24 animate-pulse rounded bg-vault-border"/><div className="space-y-2"><div className="h-4 animate-pulse rounded bg-vault-bg"/><div className="h-4 w-4/5 animate-pulse rounded bg-vault-bg"/><div className="h-4 w-3/5 animate-pulse rounded bg-vault-bg"/></div></section>}{answer && <section className="rounded-3xl border border-vault-border bg-vault-card p-6"><div className="mb-4 flex items-center gap-2"><Sparkles size={17} className="text-vault-primary"/><h2 className="font-semibold text-white">AI Answer</h2></div><p className="whitespace-pre-wrap leading-7 text-zinc-200">{answer}</p>{sources.length > 0 && <div className="mt-7 border-t border-vault-border pt-5"><h3 className="mb-3 text-sm font-semibold text-vault-muted">Retrieved sources</h3><div className="space-y-2">{sources.map((source, index) => <div key={index} className="rounded-xl border border-vault-border/60 bg-vault-bg/50 p-3 text-sm text-zinc-300"><span className="mr-2 text-vault-primary">{source.score.toFixed(2)}</span>{source.content}</div>)}</div></div>}</section>}{searchResults.length > 0 && <section className="rounded-3xl border border-vault-border bg-vault-card p-6"><h2 className="mb-4 font-semibold text-white">Semantic results</h2><div className="space-y-3">{searchResults.map((result, index) => <article key={index} className="rounded-2xl border border-vault-border/60 p-4"><div className="mb-2 text-xs text-vault-primary">Relevance {result.score.toFixed(3)}</div><p className="text-sm leading-6 text-zinc-300">{result.content}</p></article>)}</div></section>}</main>;
 }
