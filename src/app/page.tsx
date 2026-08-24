@@ -6,48 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function Home() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const load = async () => {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      setAuthenticated(Boolean(data.user));
-    };
-    void load();
-  }, []);
-
-  return (
-    <main className="relative min-h-screen bg-vault-bg text-vault-text flex flex-col items-center justify-center overflow-hidden">
-      <header className="absolute top-0 w-full flex justify-end items-center p-6 z-50">
-        <Link href={authenticated ? "/dashboard" : "/sign-in"} className="text-sm font-medium text-vault-muted hover:text-white transition-colors">
-          {authenticated ? "Open Vault" : "Sign In"}
-        </Link>
-      </header>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-red-900/10 blur-[120px] rounded-full pointer-events-none"></div>
-      <div className="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center">
-        <div className="mb-8 inline-flex items-center rounded-full border border-red-500/20 bg-red-500/10 px-4 py-1.5 text-sm font-medium text-red-200 backdrop-blur-md">
-          <span className="flex h-2 w-2 rounded-full bg-red-500 mr-2 animate-pulse"></span>
-          Private Knowledge Workspace
-        </div>
-        <h1 className="text-6xl md:text-8xl font-bold tracking-tighter mb-6">
-          <span className="bg-gradient-to-b from-white to-white/70 bg-clip-text text-transparent">Piyu Vault </span>
-          <span className="text-red-600">AI</span>
-        </h1>
-        <h2 className="text-2xl md:text-4xl font-semibold text-zinc-300 mb-6 tracking-tight">
-          Private Knowledge. Secure Intelligence.
-        </h2>
-        <p className="text-lg md:text-xl text-zinc-500 max-w-2xl mb-12 leading-relaxed">
-          Store documents, notes, projects and research in one secure AI-powered vault.
-        </p>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link href={authenticated ? "/dashboard" : "/sign-up"} className="group relative inline-flex items-center justify-center px-8 py-4 font-mono text-sm font-semibold text-white transition-all duration-300 ease-out rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-red-500/50 overflow-hidden">
-            <span className="relative z-10 tracking-widest uppercase">{authenticated ? "[ Enter Vault ]" : "[ Create Vault ]"}</span>
-          </Link>
-          <Link href="/sign-in" className="inline-flex items-center justify-center rounded-lg border border-zinc-800 px-8 py-4 text-sm font-semibold text-zinc-300 hover:bg-zinc-900 hover:text-white">
-            Sign In
-          </Link>
-        </div>
-      </div>
-    </main>
-  );
+  useEffect(() => { const load = async () => { const supabase = createClient(); const { data } = await supabase.auth.getUser(); setAuthenticated(Boolean(data.user)); }; void load(); }, []);
+  return <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-vault-bg text-vault-text"><header className="absolute top-0 z-50 flex w-full justify-end p-6"><Link href={authenticated ? "/dashboard" : "/sign-in"} className="text-sm font-medium text-vault-muted transition-colors hover:text-white">{authenticated ? "Open Vault" : "Sign In"}</Link></header><div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-900/10 blur-[120px]"/><div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-6 text-center"><div className="mb-8 inline-flex items-center rounded-full border border-red-500/20 bg-red-500/10 px-4 py-1.5 text-sm font-medium text-red-200 backdrop-blur-md"><span className="mr-2 flex h-2 w-2 animate-pulse rounded-full bg-red-500"/>Private Knowledge Workspace</div><h1 className="mb-6 text-6xl font-bold tracking-tighter md:text-8xl"><span className="bg-gradient-to-b from-white to-white/70 bg-clip-text text-transparent">Piyu Vault </span><span className="text-red-600">AI</span></h1><h2 className="mb-6 text-2xl font-semibold tracking-tight text-zinc-300 md:text-4xl">Private Knowledge. Secure Intelligence.</h2><p className="mb-10 max-w-2xl text-lg leading-relaxed text-zinc-500 md:text-xl">Store documents, notes, projects and research in one secure AI-powered vault.</p><div className="flex flex-wrap justify-center gap-3"><Link href={authenticated ? "/dashboard" : "/sign-up"} className="inline-flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 px-7 py-3.5 text-sm font-semibold text-white transition hover:border-red-500/50 hover:bg-zinc-800">{authenticated ? "Enter Vault" : "Create Vault"}</Link>{authenticated === false && <Link href="/sign-in?guest=1" className="inline-flex items-center justify-center rounded-lg border border-red-500/30 bg-red-500/5 px-7 py-3.5 text-sm font-semibold text-red-200 transition hover:border-red-500/60 hover:bg-red-500/10">Continue as Guest</Link>}<Link href={authenticated ? "/dashboard" : "/sign-in"} className="inline-flex items-center justify-center rounded-lg border border-zinc-800 px-7 py-3.5 text-sm font-semibold text-zinc-300 hover:bg-zinc-900 hover:text-white">{authenticated ? "Open Vault" : "Sign In"}</Link></div>{authenticated === false && <p className="mt-4 text-xs text-zinc-600">Guest mode is for exploring the interface. Your private files and notes require an account.</p>}</div></main>;
 }
