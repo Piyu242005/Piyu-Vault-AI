@@ -3,139 +3,19 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Plus, Save, Trash2, X } from "lucide-react";
 
-type Note = {
-  id: string;
-  title: string;
-  content: string;
-  tags: string[];
-  created_at: string;
-  updated_at?: string | null;
-};
-
+type Note = { id: string; title: string; content: string; tags: string[]; created_at: string; updated_at?: string | null };
 const API = "/api/backend/notes";
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [selected, setSelected] = useState<Note | null>(null);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [tags, setTags] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-
-  async function loadNotes() {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(API, { cache: "no-store" });
-      if (!res.ok) throw new Error((await res.json()).detail || "Unable to load notes");
-      setNotes(await res.json());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load notes");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadNotes();
-  }, []);
-
-  function newNote() {
-    setSelected(null);
-    setTitle("");
-    setContent("");
-    setTags("");
-    setError("");
-  }
-
-  function selectNote(note: Note) {
-    setSelected(note);
-    setTitle(note.title);
-    setContent(note.content);
-    setTags(note.tags.join(", "));
-    setError("");
-  }
-
-  async function saveNote(event: FormEvent) {
-    event.preventDefault();
-    if (!title.trim() || !content.trim()) return;
-    setSaving(true);
-    setError("");
-    try {
-      const payload = {
-        title: title.trim(),
-        content: content.trim(),
-        tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
-      };
-      const res = await fetch(selected ? `${API}/${selected.id}` : API, {
-        method: selected ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error((await res.json()).detail || "Unable to save note");
-      const saved: Note = await res.json();
-      setNotes((current) => selected
-        ? current.map((note) => note.id === saved.id ? saved : note)
-        : [saved, ...current]);
-      selectNote(saved);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to save note");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function removeNote() {
-    if (!selected || !window.confirm("Delete this note?")) return;
-    const res = await fetch(`${API}/${selected.id}`, { method: "DELETE" });
-    if (!res.ok) {
-      setError((await res.json()).detail || "Unable to delete note");
-      return;
-    }
-    setNotes((current) => current.filter((note) => note.id !== selected.id));
-    newNote();
-  }
-
-  return (
-    <main className="mx-auto grid w-full max-w-7xl gap-6 p-6 lg:grid-cols-[320px_1fr]">
-      <section className="rounded-3xl border border-vault-border bg-vault-card p-4">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-white">Notes</h1>
-            <p className="text-sm text-vault-muted">{notes.length} saved</p>
-          </div>
-          <button onClick={newNote} className="rounded-xl bg-vault-primary p-2.5 text-white" aria-label="New note"><Plus size={18} /></button>
-        </div>
-        {loading ? <p className="p-4 text-sm text-vault-muted">Loading notes…</p> : notes.length === 0 ? <p className="p-4 text-sm text-vault-muted">No notes yet. Create your first one.</p> : (
-          <div className="space-y-2">
-            {notes.map((note) => (
-              <button key={note.id} onClick={() => selectNote(note)} className={`w-full rounded-2xl border p-4 text-left transition ${selected?.id === note.id ? "border-vault-primary bg-vault-primary/10" : "border-vault-border/60 hover:bg-vault-bg/50"}`}>
-                <p className="truncate font-medium text-white">{note.title}</p>
-                <p className="mt-1 line-clamp-2 text-xs text-vault-muted">{note.content}</p>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="rounded-3xl border border-vault-border bg-vault-card p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div><p className="text-sm text-vault-muted">{selected ? "Edit note" : "New note"}</p><h2 className="text-2xl font-bold text-white">Personal Knowledge</h2></div>
-          {selected && <button onClick={newNote} className="rounded-xl p-2 text-vault-muted hover:bg-vault-bg hover:text-white"><X size={18} /></button>}
-        </div>
-        {error && <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div>}
-        <form onSubmit={saveNote} className="space-y-5">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Note title" className="w-full rounded-2xl border border-vault-border bg-vault-bg px-4 py-3 text-white outline-none focus:border-vault-primary" required />
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write your knowledge here…" className="min-h-[360px] w-full resize-y rounded-2xl border border-vault-border bg-vault-bg px-4 py-3 text-white outline-none focus:border-vault-primary" required />
-          <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags: machine-learning, python, ideas" className="w-full rounded-2xl border border-vault-border bg-vault-bg px-4 py-3 text-white outline-none focus:border-vault-primary" />
-          <div className="flex flex-wrap gap-3">
-            <button disabled={saving} className="flex items-center gap-2 rounded-xl bg-vault-primary px-5 py-3 font-semibold text-white disabled:opacity-50"><Save size={18} />{saving ? "Saving…" : "Save Note"}</button>
-            {selected && <button type="button" onClick={removeNote} className="flex items-center gap-2 rounded-xl border border-red-500/30 px-5 py-3 font-semibold text-red-300 hover:bg-red-500/10"><Trash2 size={18} />Delete</button>}
-          </div>
-        </form>
-      </section>
-    </main>
-  );
+  const [notes, setNotes] = useState<Note[]>([]); const [selected, setSelected] = useState<Note | null>(null); const [title, setTitle] = useState(""); const [content, setContent] = useState(""); const [tags, setTags] = useState(""); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
+  async function loadNotes() { setLoading(true); setError(""); try { const res = await fetch(API, { cache: "no-store" }); const body = await res.json().catch(() => ({})); if (!res.ok) throw new Error(body.detail || "Unable to load notes"); setNotes(body); } catch (err) { setError(err instanceof Error ? err.message : "Unable to load notes"); } finally { setLoading(false); } }
+  useEffect(() => { void loadNotes(); }, []);
+  function newNote() { setSelected(null); setTitle(""); setContent(""); setTags(""); setError(""); }
+  function selectNote(note: Note) { setSelected(note); setTitle(note.title); setContent(note.content); setTags(note.tags.join(", ")); setError(""); }
+  async function saveNote(event: FormEvent) { event.preventDefault(); if (!title.trim() || !content.trim()) return; setSaving(true); setError(""); try { const payload = { title: title.trim(), content: content.trim(), tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean) }; const res = await fetch(selected ? `${API}/${selected.id}` : API, { method: selected ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); const body = await res.json().catch(() => ({})); if (!res.ok) throw new Error(body.detail || "Unable to save note"); const saved: Note = body; setNotes((current) => selected ? current.map((note) => note.id === saved.id ? saved : note) : [saved, ...current]); selectNote(saved); } catch (err) { setError(err instanceof Error ? err.message : "Unable to save note"); } finally { setSaving(false); } }
+  async function removeNote() { if (!selected || !window.confirm("Delete this note permanently?")) return; const res = await fetch(`${API}/${selected.id}`, { method: "DELETE" }); const body = await res.json().catch(() => ({})); if (!res.ok) { setError(body.detail || "Unable to delete note"); return; } setNotes((current) => current.filter((note) => note.id !== selected.id)); newNote(); }
+  return <main className="mx-auto grid w-full max-w-7xl gap-6 p-4 sm:p-6 lg:grid-cols-[320px_1fr]">
+    <section className="rounded-3xl border border-vault-border bg-vault-card p-4"><div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-vault-primary">Knowledge base</p><h1 className="mt-1 text-xl font-bold text-white">Notes</h1><p className="text-sm text-vault-muted">{loading ? "Loading…" : `${notes.length} saved`}</p></div><button onClick={newNote} className="rounded-xl bg-vault-primary p-2.5 text-white shadow-lg shadow-vault-primary/20" aria-label="New note"><Plus size={18}/></button></div>{loading ? <div className="space-y-2">{[1,2,3,4].map((n) => <div key={n} className="h-20 animate-pulse rounded-2xl bg-vault-bg/70"/>)}</div> : notes.length === 0 ? <div className="rounded-2xl border border-dashed border-vault-border p-6 text-center"><p className="font-medium text-white">No notes yet</p><p className="mt-1 text-xs text-vault-muted">Create your first private knowledge note.</p></div> : <div className="space-y-2">{notes.map((note) => <button key={note.id} onClick={() => selectNote(note)} className={`w-full rounded-2xl border p-4 text-left transition ${selected?.id === note.id ? "border-vault-primary bg-vault-primary/10" : "border-vault-border/60 hover:border-vault-primary/40 hover:bg-vault-bg/50"}`}><p className="truncate font-medium text-white">{note.title}</p><p className="mt-1 line-clamp-2 text-xs text-vault-muted">{note.content}</p>{note.tags.length > 0 && <div className="mt-2 flex gap-1 overflow-hidden">{note.tags.slice(0,3).map((tag) => <span key={tag} className="rounded-full bg-vault-bg px-2 py-0.5 text-[10px] text-vault-muted">{tag}</span>)}</div>}</button>)}</div>}</section>
+    <section className="rounded-3xl border border-vault-border bg-vault-card p-5 sm:p-7"><div className="mb-6 flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-vault-primary">{selected ? "Editing" : "Create"}</p><h2 className="mt-1 text-2xl font-bold text-white">{selected ? selected.title : "New knowledge note"}</h2></div>{selected && <button onClick={newNote} className="rounded-xl p-2 text-vault-muted hover:bg-vault-bg hover:text-white" aria-label="Close note"><X size={18}/></button>}</div>{error && <div role="alert" className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div>}<form onSubmit={saveNote} className="space-y-5"><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Give your note a clear title" className="w-full rounded-2xl border border-vault-border bg-vault-bg px-4 py-3 text-white outline-none placeholder:text-vault-muted focus:border-vault-primary" required/><textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write your knowledge, ideas, research or meeting notes…" className="min-h-[360px] w-full resize-y rounded-2xl border border-vault-border bg-vault-bg px-4 py-3 leading-7 text-white outline-none placeholder:text-vault-muted focus:border-vault-primary" required/><input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags: machine-learning, python, ideas" className="w-full rounded-2xl border border-vault-border bg-vault-bg px-4 py-3 text-white outline-none placeholder:text-vault-muted focus:border-vault-primary"/><div className="flex flex-wrap gap-3"><button disabled={saving} className="flex items-center gap-2 rounded-xl bg-vault-primary px-5 py-3 font-semibold text-white shadow-lg shadow-vault-primary/20 disabled:opacity-50"><Save size={18}/>{saving ? "Saving…" : selected ? "Save changes" : "Create note"}</button>{selected && <button type="button" onClick={removeNote} className="flex items-center gap-2 rounded-xl border border-red-500/30 px-5 py-3 font-semibold text-red-300 hover:bg-red-500/10"><Trash2 size={18}/>Delete</button>}</div></form></section>
+  </main>;
 }
