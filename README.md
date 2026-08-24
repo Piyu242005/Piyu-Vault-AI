@@ -1,98 +1,285 @@
-# Piyu Vault AI
+# 🔐 Piyu Vault AI
 
-An enterprise-grade, AI-powered personal knowledge intelligence platform.
+> **Private Knowledge. Secure Intelligence.**
+>
+> A production-oriented AI knowledge vault for securely storing documents and notes, searching private knowledge with RAG, and managing personal information from one modern workspace.
 
-Piyu Vault AI is a full-stack application using Next.js for the frontend, FastAPI for the backend, PostgreSQL for application data, Qdrant for vector search, and an AI/RAG layer for private knowledge retrieval.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/FastAPI-Python-009688?logo=fastapi" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Supabase-Auth%20%7C%20Postgres%20%7C%20Storage-3ECF8E?logo=supabase" alt="Supabase" />
+  <img src="https://img.shields.io/badge/Qdrant-Vector%20Search-DC244C" alt="Qdrant" />
+  <img src="https://img.shields.io/badge/RAG-AI%20Search-7C3AED" alt="RAG" />
+  <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT" />
+</p>
 
-## Architecture
+## ✨ What is Piyu Vault AI?
 
-* **Frontend**: Next.js 16, React, Tailwind CSS
-* **Authentication**: Clerk
-* **Database**: PostgreSQL (Neon)
-* **ORM**: Prisma + SQLAlchemy
-* **Backend API**: FastAPI
-* **Storage**: Per-user local storage abstraction (S3-compatible service can be added later)
-* **Vector Database**: Qdrant
-* **AI Engine**: LangChain, SentenceTransformers, OpenAI
+Piyu Vault AI is a full-stack private knowledge platform designed around **user-owned data, authenticated access, private storage, and AI-powered retrieval**.
 
-## Version 0.5 — Frontend & Backend Integration ✅
+Instead of treating the interface as a static dashboard, the application connects the user experience to real authentication, database records, private object storage, activity logs, and a FastAPI-powered RAG layer.
 
-The frontend communicates with FastAPI through an authenticated Next.js server proxy. Clerk identity is forwarded to FastAPI and database queries are scoped to the authenticated user.
+### Core capabilities
 
-## Version 0.6 — Storage, Uploads & Hardening ✅
+- 🔑 **Supabase Authentication** — email/password signup, verification, sessions and password reset
+- 📁 **Private File Vault** — authenticated upload, download and deletion
+- 📝 **Notes** — authenticated note CRUD
+- 🧠 **AI Search & RAG** — semantic retrieval through Qdrant
+- 💬 **AI Chat** — contextual answers from the user's indexed knowledge
+- 📊 **Analytics** — activity and content metrics from application data
+- 🛡️ **Security** — user-scoped access control and Row Level Security
+- ⚙️ **Settings** — account/profile management
+- 📝 **Activity Logging** — user-scoped application events
 
-### Implemented
+## 🏗️ Production Architecture
 
-* **Secure file upload**: authenticated multipart upload with a configurable 25 MB default limit
-* **Per-user storage isolation**: uploaded files are stored under a user-specific directory with path-traversal protection
-* **Download pipeline**: authenticated download endpoint streams the original file safely
-* **Delete cleanup**: database records and physical storage are removed together
-* **Activity logging**: uploads and deletions are recorded and activity queries are user-scoped
-* **Text ingestion**: supported text/code files are automatically sent to the Qdrant ingestion pipeline with user and document metadata
-* **Files UI**: upload, refresh, download and delete actions are connected to the backend
-* **Testing foundation**: storage helper tests cover naming, persistence, deletion and size limits
-* **Dependency hardening**: multipart upload, Qdrant/LangChain adapters and pytest dependencies are declared explicitly
-
-### Environment Variables
-
-Frontend `.env.local`:
-
-```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_pub_key
-CLERK_SECRET_KEY=your_clerk_secret_key
-CLERK_WEBHOOK_SECRET=your_clerk_webhook_secret
-DATABASE_URL=your_postgresql_url
-BACKEND_URL=http://localhost:8000
+```text
+                         ┌──────────────────────┐
+                         │       GitHub         │
+                         └──────────┬───────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    ▼                               ▼
+          ┌─────────────────┐             ┌─────────────────┐
+          │ Vercel          │             │ Google Cloud Run│
+          │ Next.js 16      │             │ FastAPI         │
+          │ Frontend        │────────────▶│ Backend API     │
+          └────────┬────────┘             └────────┬────────┘
+                   │                               │
+                   │                        ┌──────┴──────┐
+                   │                        ▼             ▼
+                   │                    Qdrant        AI/RAG
+                   │                    Vectors       Services
+                   │
+                   └──────────────────┬────────────────────┐
+                                      ▼                    │
+                             ┌──────────────────┐          │
+                             │     Supabase     │◀─────────┘
+                             │                  │
+                             │ Auth             │
+                             │ PostgreSQL       │
+                             │ Private Storage  │
+                             │ RLS              │
+                             └──────────────────┘
 ```
 
-Backend `.env`:
+## 🧰 Technology Stack
 
-```env
-DATABASE_URL=your_postgresql_url
-OPENAI_API_KEY=your_openai_key
-QDRANT_URL=http://localhost:6333
-EMBEDDING_MODEL=all-MiniLM-L6-v2
-COLLECTION_NAME=piyu_vault
-STORAGE_ROOT=./storage
-MAX_FILE_SIZE=26214400
-```
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 16, React, TypeScript, Tailwind CSS |
+| Authentication | Supabase Auth |
+| Database | Supabase PostgreSQL |
+| Backend | FastAPI, Python |
+| ORM / Data | SQLAlchemy + PostgreSQL |
+| Storage | Supabase Storage (`vault-files`, private) |
+| Vector Database | Qdrant |
+| RAG | Embeddings + semantic retrieval |
+| AI | OpenAI-compatible AI services |
+| Deployment | Vercel + Google Cloud Run |
+| Source Control | GitHub |
 
-## Local Development
+## 🔒 Security Model
 
-### Frontend
+Security is designed around authenticated, user-scoped access.
+
+- Supabase Auth manages user identity and sessions.
+- PostgreSQL rows are protected with **Row Level Security (RLS)**.
+- Private Storage objects are isolated by authenticated user ID.
+- FastAPI validates Supabase bearer tokens before accessing protected resources.
+- Backend-only secrets stay outside the browser.
+- Service-role credentials and AI API keys must never be exposed as `NEXT_PUBLIC_*` variables.
+
+## 📦 Data Model
+
+The Supabase application layer includes:
+
+- `profiles` — user profile information
+- `vault_files` — file metadata and ownership
+- `notes` — private user notes
+- `activity_logs` — authenticated user activity
+- `vault-files` — private Supabase Storage bucket
+
+## 🚀 Getting Started
+
+### 1. Clone
 
 ```bash
-pnpm install
-npx prisma generate
-npx prisma db push
-pnpm run dev
+git clone https://github.com/Piyu242005/Piyu-Vault-AI.git
+cd Piyu-Vault-AI
 ```
 
-### Backend
+### 2. Frontend
 
 ```bash
-docker-compose up -d
+npm install
+npm run dev
+```
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_publishable_or_anon_key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+```
+
+### 3. Backend
+
+```bash
 cd backend
 python -m venv venv
-venv\Scripts\activate
+```
+
+Activate the environment and install dependencies:
+
+```bash
 pip install -r requirements.txt
+```
+
+Run FastAPI:
+
+```bash
 uvicorn app.main:app --reload
 ```
 
-Run storage tests with:
+API documentation:
+
+```text
+http://localhost:8000/docs
+```
+
+### 4. Backend environment
+
+Configure backend-only secrets in the server environment:
+
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_private_service_role_key
+SUPABASE_STORAGE_BUCKET=vault-files
+DATABASE_URL=your_database_url
+QDRANT_URL=your_qdrant_url
+COLLECTION_NAME=piyu_vault
+OPENAI_API_KEY=your_private_ai_key
+MAX_FILE_SIZE=26214400
+FRONTEND_URL=http://localhost:3000
+```
+
+> **Never commit `.env` files or expose service-role, database, Qdrant, or AI secrets to the browser.**
+
+## ☁️ Deployment
+
+### Frontend — Vercel
+
+Set the frontend environment variables:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+NEXT_PUBLIC_SITE_URL=https://piyu-vault-ai.vercel.app
+NEXT_PUBLIC_BACKEND_URL=https://your-cloud-run-service.run.app
+```
+
+### Backend — Google Cloud Run
+
+Deploy the `backend/` service separately and configure the backend-only environment variables there.
+
+After deployment, set the resulting Cloud Run URL as:
+
+```env
+NEXT_PUBLIC_BACKEND_URL=https://your-cloud-run-service.run.app
+```
+
+### Supabase Auth URLs
+
+For production, configure the Supabase Auth **Site URL** and allowed redirect URLs to the deployed Vercel domain. Keep localhost redirect URLs only for development.
+
+## 🧪 Testing
+
+Frontend:
+
+```bash
+npm run build
+```
+
+Backend:
 
 ```bash
 pytest
 ```
 
-FastAPI documentation is available at `http://localhost:8000/docs`.
+FastAPI health/API documentation can be checked at `/docs` when the backend is running.
 
-## Roadmap
+## 📁 Repository Structure
 
-* **Version 0.1**: Initial Next.js Scaffold & UI ✅
-* **Version 0.2**: Clerk Auth & PostgreSQL Setup ✅
-* **Version 0.3**: FastAPI CRUD Endpoints & Pydantic Schemas ✅
-* **Version 0.4**: Qdrant Vector Search & AI RAG Integration ✅
-* **Version 0.5**: Frontend & Backend Integration ✅
-* **Version 0.6**: Storage, Uploads & Hardening ✅
-* **Version 0.7**: Production object storage, background ingestion jobs, observability and CI/CD
+```text
+Piyu-Vault-AI/
+├── src/                 # Next.js frontend
+│   ├── app/             # Application routes
+│   ├── components/      # Reusable UI
+│   └── lib/             # Supabase/API helpers
+├── backend/             # FastAPI backend
+│   └── app/
+│       ├── api/         # Protected API routes
+│       ├── models/      # Database models
+│       ├── schemas/     # Pydantic schemas
+│       └── services/    # Storage, RAG and AI services
+├── supabase/            # Supabase migrations/configuration
+├── public/              # Static assets
+├── package.json
+└── vercel.json
+```
+
+## 🗺️ Project Status
+
+| Capability | Status |
+|---|---|
+| Supabase Auth | ✅ Implemented |
+| Email verification | ✅ Implemented |
+| Password reset | ✅ Implemented |
+| PostgreSQL + RLS | ✅ Implemented |
+| Private Storage | ✅ Implemented |
+| File CRUD | ✅ Implemented |
+| Notes CRUD | ✅ Implemented |
+| Activity logging | ✅ Implemented |
+| Qdrant RAG | ✅ Implemented |
+| AI search/chat API | ✅ Implemented |
+| Vercel frontend | 🚀 Deployment-ready |
+| Cloud Run backend | 🚀 Deployment-ready |
+| Production E2E validation | 🔄 Final validation |
+
+## 🛣️ Roadmap
+
+- [x] Replace legacy Clerk authentication with Supabase Auth
+- [x] Move application data to Supabase PostgreSQL
+- [x] Configure private Supabase Storage
+- [x] Add user-scoped RLS policies
+- [x] Connect file and note operations to real backend services
+- [x] Connect AI retrieval to authenticated users
+- [ ] Complete Cloud Run production deployment
+- [ ] Add production observability and monitoring
+- [ ] Add background ingestion workers
+- [ ] Expand automated end-to-end test coverage
+
+## 🎯 Why this project exists
+
+Piyu Vault AI was built as a practical exploration of **secure personal knowledge management + RAG**.
+
+The goal is to combine a modern full-stack application with real authentication, private data storage, semantic search, and AI-assisted knowledge retrieval in one deployable system.
+
+## 👨‍💻 Author
+
+**Piyush Ramteke**
+
+Data Scientist • Python • AI/ML • RAG
+
+- GitHub: [@Piyu242005](https://github.com/Piyu242005)
+- LinkedIn: [@piyu24](https://www.linkedin.com/in/piyu24)
+
+---
+
+<p align="center">
+  <strong>Piyu Vault AI</strong><br />
+  Private Knowledge. Secure Intelligence.
+</p>
