@@ -4,6 +4,13 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+const getSiteUrl = () => {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return configured.replace(/\/$/, "");
+  if (typeof window !== "undefined") return window.location.origin;
+  return "http://localhost:3000";
+};
+
 export default function SignUpPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -18,7 +25,13 @@ export default function SignUpPage() {
     setError("");
     setMessage("");
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${getSiteUrl()}/auth/confirm?next=/dashboard`,
+      },
+    });
     if (error) {
       setError(error.message);
       setLoading(false);
@@ -29,7 +42,7 @@ export default function SignUpPage() {
       router.refresh();
       return;
     }
-    setMessage("Account created. Check your email to confirm your address, then sign in.");
+    setMessage("Account created. Check your email to verify your address and activate your vault.");
     setLoading(false);
   }
 
