@@ -6,11 +6,11 @@ import { FileText, Files, Search, HardDrive, ShieldCheck, UploadCloud, PlusSquar
 import { createClient } from "@/lib/supabase/client";
 
 type Stats = { files: number; notes: number; searches: number; storage: number };
-
 type Activity = { id: string; action: string; item: string | null; created_at: string };
 
 export default function DashboardPage() {
   const [firstName, setFirstName] = useState("Vault User");
+  const [verified, setVerified] = useState(false);
   const [stats, setStats] = useState<Stats>({ files: 0, notes: 0, searches: 0, storage: 0 });
   const [activity, setActivity] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,13 +20,10 @@ export default function DashboardPage() {
     const load = async () => {
       const supabase = createClient();
       const { data: userData, error: authError } = await supabase.auth.getUser();
-      if (authError || !userData.user) {
-        setError("Please sign in to access your vault.");
-        setLoading(false);
-        return;
-      }
+      if (authError || !userData.user) { setError("Please sign in to access your vault."); setLoading(false); return; }
       const metadata = userData.user.user_metadata;
       setFirstName(metadata?.first_name || metadata?.full_name || metadata?.name || userData.user.email?.split("@")[0] || "Vault User");
+      setVerified(Boolean(userData.user.email_confirmed_at));
 
       const [files, notes, searchLogs, logs, storageRows] = await Promise.all([
         supabase.from("vault_files").select("id", { count: "exact", head: true }),
@@ -35,10 +32,7 @@ export default function DashboardPage() {
         supabase.from("activity_logs").select("id, action, item, created_at").order("created_at", { ascending: false }).limit(6),
         supabase.from("vault_files").select("size_bytes"),
       ]);
-
-      const queryErrors = [files.error, notes.error, searchLogs.error, logs.error, storageRows.error].filter(Boolean);
-      if (queryErrors.length) setError("Some live vault metrics could not be loaded.");
-
+      if ([files.error, notes.error, searchLogs.error, logs.error, storageRows.error].filter(Boolean).length) setError("Some live vault metrics could not be loaded.");
       const storage = (storageRows.data ?? []).reduce((total, row) => total + Number(row.size_bytes ?? 0), 0);
       setStats({ files: files.count ?? 0, notes: notes.count ?? 0, searches: searchLogs.count ?? 0, storage });
       setActivity((logs.data ?? []) as Activity[]);
@@ -53,7 +47,6 @@ export default function DashboardPage() {
     const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
     return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
   };
-
   const statsList = [
     { label: "Total Files", value: loading ? "—" : String(stats.files), icon: Files, color: "text-blue-400", bg: "bg-blue-400/10" },
     { label: "Notes", value: loading ? "—" : String(stats.notes), icon: FileText, color: "text-emerald-400", bg: "bg-emerald-400/10" },
@@ -68,7 +61,7 @@ export default function DashboardPage() {
         <div className="relative z-10">
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-vault-primary">Live Vault</p>
           <h1 className="mb-2 text-3xl font-bold text-white lg:text-4xl">Welcome back, {firstName} 👋</h1>
-          <p className="mb-8 max-w-2xl text-lg text-vault-muted">Your dashboard is connected to your authenticated Supabase data.</p>
+          <p className="mb-8 max-w-2xl text-lg text-vault-muted">Your dashboard is connected to authenticated Supabase data.</p>
           <div className="flex flex-wrap gap-4">
             <Link href="/files" className="flex items-center gap-2 rounded-xl bg-vault-text px-6 py-3 font-semibold text-vault-bg hover:bg-zinc-200"><UploadCloud className="h-5 w-5" />Upload File</Link>
             <Link href="/notes" className="flex items-center gap-2 rounded-xl border border-vault-border bg-vault-card px-6 py-3 font-medium text-white hover:bg-vault-border/50"><PlusSquare className="h-5 w-5 text-emerald-400" />Create Note</Link>
@@ -76,18 +69,15 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
-
       {error && <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">{error}</div>}
-
       <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {statsList.map((stat) => { const Icon = stat.icon; return <div key={stat.label} className="rounded-2xl border border-vault-border bg-vault-card p-5"><div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}><Icon className={`h-5 w-5 ${stat.color}`} /></div><p className="mb-1 text-sm font-medium text-vault-muted">{stat.label}</p><h3 className="text-2xl font-bold text-white">{stat.value}</h3></div>; })}
-        <div className="rounded-2xl border border-vault-border bg-vault-card p-5"><div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400/10"><ShieldCheck className="h-5 w-5 text-emerald-400" /></div><p className="mb-1 text-sm font-medium text-vault-muted">Auth</p><h3 className="text-2xl font-bold text-white">Verified</h3></div>
+        <div className="rounded-2xl border border-vault-border bg-vault-card p-5"><div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400/10"><ShieldCheck className="h-5 w-5 text-emerald-400" /></div><p className="mb-1 text-sm font-medium text-vault-muted">Email</p><h3 className="text-2xl font-bold text-white">{loading ? "—" : verified ? "Verified" : "Unverified"}</h3></div>
       </section>
-
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 rounded-3xl border border-vault-border bg-vault-card p-6">
           <div className="mb-6 flex items-center justify-between"><h2 className="text-xl font-bold text-white">Recent Activity</h2><Link href="/analytics" className="text-sm font-medium text-vault-primary hover:text-vault-accent">View Analytics</Link></div>
-          <div className="space-y-3">{activity.length === 0 ? <p className="rounded-2xl border border-dashed border-vault-border p-6 text-center text-sm text-vault-muted">No activity yet. Upload a file, create a note or run an AI search to start building your history.</p> : activity.map((log) => <div key={log.id} className="flex items-center justify-between gap-4 rounded-2xl border border-vault-border/50 bg-vault-bg/50 p-4"><div className="flex min-w-0 items-center gap-4"><div className="h-2 w-2 shrink-0 rounded-full bg-vault-primary" /><div className="min-w-0"><p className="text-sm font-medium text-white">{log.action}</p><p className="truncate text-xs text-vault-muted">{log.item || "Vault activity"}</p></div></div><span className="shrink-0 text-xs text-vault-muted">{new Date(log.created_at).toLocaleString()}</span></div>)}</div>
+          <div className="space-y-3">{activity.length === 0 ? <p className="rounded-2xl border border-dashed border-vault-border p-6 text-center text-sm text-vault-muted">No activity yet.</p> : activity.map((log) => <div key={log.id} className="flex items-center justify-between gap-4 rounded-2xl border border-vault-border/50 bg-vault-bg/50 p-4"><div className="flex min-w-0 items-center gap-4"><div className="h-2 w-2 shrink-0 rounded-full bg-vault-primary" /><div className="min-w-0"><p className="text-sm font-medium text-white">{log.action}</p><p className="truncate text-xs text-vault-muted">{log.item || "Vault activity"}</p></div></div><span className="shrink-0 text-xs text-vault-muted">{new Date(log.created_at).toLocaleString()}</span></div>)}</div>
         </div>
         <div className="relative overflow-hidden rounded-3xl border border-vault-border bg-gradient-to-b from-vault-card to-vault-bg p-6 text-center"><ShieldCheck className="mx-auto mb-4 h-16 w-16 text-vault-primary" /><h3 className="mb-2 text-lg font-bold text-white">Vault Protection</h3><p className="mb-6 text-sm text-vault-muted">Authenticated access and row-level security protect your personal data.</p><Link href="/security" className="relative z-10 inline-flex rounded-xl border border-vault-border px-5 py-2.5 text-sm font-medium text-white hover:bg-vault-border/50">Open Security</Link></div>
       </section>
