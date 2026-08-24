@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,10 +7,17 @@ from app.api import api_router
 
 app = FastAPI(title="Piyu Vault AI API")
 
-# Enable CORS for Next.js Frontend
+origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+]
+production_origin = os.getenv("FRONTEND_URL", "").rstrip("/")
+if production_origin:
+    origins.append(production_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"], # Add vercel URL later
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
